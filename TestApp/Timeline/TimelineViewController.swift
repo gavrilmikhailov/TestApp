@@ -93,7 +93,14 @@ final class TimelineViewController: UIViewController {
         let count = models.count
         return models.enumerated().map { (index, item) in
             TimelineItemViewModel(
-                model: item,
+                subsiteIconUid: item.data.subsite.avatar.data.uuid,
+                subsiteName: item.data.subsite.name,
+                authorName: item.data.author.name,
+                date: formatDate(date: item.data.date),
+                title: item.data.title,
+                blocks: item.data.blocks.filter { $0.cover },
+                comments: String(item.data.counters.comments),
+                likes: String(item.data.likes.counter),
                 margins: NSDirectionalEdgeInsets(
                     top: index == 0 ? 0 : 10,
                     leading: 0,
@@ -102,6 +109,14 @@ final class TimelineViewController: UIViewController {
                 )
             )
         }
+    }
+    
+    private func formatDate(date: Int) -> String {
+        let timeInterval = Date().timeIntervalSince(Date(timeIntervalSince1970: TimeInterval(date)))
+        let formatter = DateComponentsFormatter()
+        formatter.unitsStyle = .brief
+        formatter.allowedUnits = [.day, .hour]
+        return formatter.string(from: timeInterval) ?? ""
     }
 }
 

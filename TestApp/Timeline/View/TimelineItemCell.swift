@@ -182,33 +182,14 @@ final class TimelineItemCell: UITableViewCell {
     
     func configure(with viewModel: TimelineItemViewModel) {
         contentView.directionalLayoutMargins = viewModel.margins
-        setupSubsiteIcon(imageUid: viewModel.model.data.subsite.avatar.data.uuid)
-        subsiteNameLabel.text = viewModel.model.data.subsite.name
-        authorNameLabel.text = viewModel.model.data.author.name
-        dateLabel.text = formatDate(date: viewModel.model.data.date)
-        setupContentStackView(data: viewModel.model.data)
-        commentsLabel.text = String(viewModel.model.data.counters.comments)
-        likesLabel.text = String(viewModel.model.data.likes.counter)
-    }
-    
-    private func formatDate(date: Int) -> String {
-        let timeInterval = Date().timeIntervalSince(Date(timeIntervalSince1970: TimeInterval(date)))
-        let formatter = DateComponentsFormatter()
-        formatter.unitsStyle = .brief
-        formatter.allowedUnits = [.day, .hour]
-        return formatter.string(from: timeInterval) ?? ""
-    }
-    
-    private func setupSubsiteIcon(imageUid: String) {
-        if let url = URL(string: "https://leonardo.osnova.io/\(imageUid)"), !imageUid.isEmpty {
-            subsiteIconImageView.kf.setImage(with: url)
-        }
-    }
-    
-    private func setupContentStackView(data: TimelineItemDataModel) {
         contentStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        addTitleBlock(text: data.title)
-        data.blocks.filter { $0.cover }.forEach {
+        
+        setupSubsiteIcon(imageUid: viewModel.subsiteIconUid)
+        subsiteNameLabel.text = viewModel.subsiteName
+        authorNameLabel.text = viewModel.authorName
+        dateLabel.text = viewModel.date
+        addTitleBlock(text: viewModel.title)
+        viewModel.blocks.forEach {
             switch $0.data {
             case let .text(model):
                 addDescriptionBlock(text: model.text)
@@ -220,8 +201,16 @@ final class TimelineItemCell: UITableViewCell {
                 break
             }
         }
+        commentsLabel.text = viewModel.comments
+        likesLabel.text = viewModel.likes
     }
     
+    private func setupSubsiteIcon(imageUid: String) {
+        if let url = URL(string: "https://leonardo.osnova.io/\(imageUid)"), !imageUid.isEmpty {
+            subsiteIconImageView.kf.setImage(with: url)
+        }
+    }
+
     private func addTitleBlock(text: String) {
         guard !text.isEmpty else { return }
         let titleLabel = makeTitleLabel()

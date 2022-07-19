@@ -81,33 +81,26 @@
 			children = (
 				6D79DA5D28844A910030EE3A /* TimelineItemCell.swift */,
 				6D79DA5B2884473B0030EE3A /* TimelineView.swift */,
-				6D0DE85A288665E700AF8756 /* PaddingLabel.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
 		};
-		6D0DE7C8288522B300AF8756 /* Extensions */ = {
+		6D0DE7C8288522B300AF8756 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				6D0DE7BF288503E600AF8756 /* RuntimeError.swift */,
+				6D0DE85A288665E700AF8756 /* PaddingLabel.swift */,
 			);
-			path = Extensions;
+			path = Common;
 			sourceTree = "<group>";
 		};
 		6D0DE7CF2885557B00AF8756 /* ImageViewer */ = {
 			isa = PBXGroup;
 			children = (
-				6D0DE7D62885906400AF8756 /* View */,
+				6D0DE7D42885905F00AF8756 /* ImageViewerView.swift */,
 				6D0DE7D02885558B00AF8756 /* ImageViewerViewController.swift */,
 			);
 			path = ImageViewer;
-			sourceTree = "<group>";
-		};
-		6D0DE7D62885906400AF8756 /* View */ = {
-			isa = PBXGroup;
-			children = (
-				6D0DE7D42885905F00AF8756 /* ImageViewerView.swift */,
-			);
-			path = View;
 			sourceTree = "<group>";
 		};
 		6D79DA3A288441B00030EE3A = {
@@ -131,10 +124,9 @@
 			children = (
 				6D79DA46288441B00030EE3A /* AppDelegate.swift */,
 				6D79DA48288441B00030EE3A /* SceneDelegate.swift */,
-				6D0DE7BF288503E600AF8756 /* RuntimeError.swift */,
 				6D79DA5A288447130030EE3A /* Timeline */,
 				6D0DE7CF2885557B00AF8756 /* ImageViewer */,
-				6D0DE7C8288522B300AF8756 /* Extensions */,
+				6D0DE7C8288522B300AF8756 /* Common */,
 				6D79DA4F288441B10030EE3A /* Assets.xcassets */,
 				6D79DA51288441B10030EE3A /* LaunchScreen.storyboard */,
 				6D79DA54288441B10030EE3A /* Info.plist */,
