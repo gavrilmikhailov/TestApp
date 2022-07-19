@@ -7,10 +7,6 @@
 
 import Foundation
 
-struct TimelineEntry: Decodable {
-    
-}
-
 final class TimelineProvider {
     
     func fetchTimeline(queryParams: [String: String], completion: @escaping (Result<TimelineResponseModel, Error>) -> Void) {

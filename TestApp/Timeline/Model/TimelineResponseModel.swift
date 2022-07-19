@@ -12,8 +12,25 @@ struct TimelineResponseModel: Decodable {
 
 struct TimelineResultModel: Decodable {
     let items: [TimelineItemModel]
-    let lastId: Int
+    let lastId: String
     let lastSortingValue: String
+    
+    private enum CodingKeys: CodingKey {
+        case items
+        case lastId
+        case lastSortingValue
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.items = try container.decode([TimelineItemModel].self, forKey: .items)
+        if let intLastId = try? container.decode(Int.self, forKey: .lastId) {
+            self.lastId = String(intLastId)
+        } else {
+            self.lastId = try container.decode(String.self, forKey: .lastId)
+        }
+        self.lastSortingValue = try container.decode(String.self, forKey: .lastSortingValue)
+    }
 }
 
 struct TimelineItemModel: Decodable {
@@ -52,6 +69,8 @@ struct AttachModel: Decodable {
 
 struct AttachDataModel: Decodable {
     let uuid: String
+    let width: Int
+    let height: Int
 }
 
 struct CountersModel: Decodable {

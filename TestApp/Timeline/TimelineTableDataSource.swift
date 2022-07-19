@@ -9,6 +9,8 @@ import UIKit
 
 final class TimelineTableDataSource: NSObject, UITableViewDataSource {
     
+    weak var delegate: TimelineViewDelegate?
+    
     var representableModels: [TimelineItemViewModel] = []
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -19,8 +21,11 @@ final class TimelineTableDataSource: NSObject, UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "TimelineItemCell", for: indexPath) as? TimelineItemCell else {
             return UITableViewCell()
         }
-        let model = representableModels[indexPath.row]
-        cell.configure(with: model)
+        cell.configure(with: representableModels[indexPath.row])
+        cell.delegate = delegate
+        if indexPath.row == representableModels.count - 1 {
+            delegate?.loadMore()
+        }
         return cell
     }
 }

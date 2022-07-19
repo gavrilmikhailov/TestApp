@@ -11,7 +11,7 @@ struct BlockModel: Decodable {
     let cover: Bool
     let hidden: Bool
     
-    private enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: CodingKey {
         case type
         case data
         case cover

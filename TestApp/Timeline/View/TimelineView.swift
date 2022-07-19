@@ -21,7 +21,13 @@ final class TimelineView: UIView {
         tableView.separatorStyle = .none
         tableView.sectionHeaderTopPadding = .zero
         tableView.backgroundColor = ViewMetrics.backgroundColor
+        tableView.allowsSelection = false
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refresh), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+
         return tableView
     }()
     
@@ -34,13 +40,11 @@ final class TimelineView: UIView {
     init(
         frame: CGRect,
         delegate: TimelineViewDelegate,
-        tableDataSource: UITableViewDataSource,
-        tableDelegate: UITableViewDelegate
+        tableDataSource: UITableViewDataSource
     ) {
         self.delegate = delegate
         super.init(frame: frame)
         tableView.dataSource = tableDataSource
-        tableView.delegate = tableDelegate
         setupLayout()
     }
     
@@ -57,13 +61,17 @@ final class TimelineView: UIView {
             loadingIndicatorView.centerXAnchor.constraint(equalTo: centerXAnchor),
             loadingIndicatorView.centerYAnchor.constraint(equalTo: centerYAnchor),
 
-            tableView.topAnchor.constraint(equalTo: topAnchor),
-            tableView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            tableView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor)
         ])
         loadingIndicatorView.startAnimating()
         tableView.isHidden = true
+    }
+    
+    @objc private func refresh() {
+        delegate?.refresh()
     }
     
     func configure(isLoading: Bool) {
@@ -75,10 +83,23 @@ final class TimelineView: UIView {
             loadingIndicatorView.stopAnimating()
             loadingIndicatorView.isHidden = true
             tableView.isHidden = false
+            tableView.refreshControl?.endRefreshing()
         }
     }
     
     func reloadTableView() {
         tableView.reloadData()
+    }
+    
+    func startLoadingMore() {
+        guard tableView.tableFooterView == nil else { return }
+        let indicatorView = UIActivityIndicatorView()
+        indicatorView.frame = CGRect(x: 0.0, y: 0.0, width: tableView.bounds.width, height: 40)
+        indicatorView.startAnimating()
+        tableView.tableFooterView = indicatorView
+    }
+
+    func stopLoadingMore() {
+        tableView.tableFooterView = nil
     }
 }

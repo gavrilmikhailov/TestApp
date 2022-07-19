@@ -6,8 +6,11 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class TimelineItemCell: UITableViewCell {
+    
+    weak var delegate: TimelineViewDelegate?
     
     private lazy var containerView: UIView = {
         let containerView = UIView()
@@ -20,12 +23,13 @@ final class TimelineItemCell: UITableViewCell {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.spacing = 8
+        stackView.isUserInteractionEnabled = true
         stackView.translatesAutoresizingMaskIntoConstraints = false
         return stackView
     }()
     
-    private lazy var subsiteIconImageView: WebImageView = {
-        let imageView = WebImageView()
+    private lazy var subsiteIconImageView: UIImageView = {
+        let imageView = UIImageView()
         imageView.layer.cornerRadius = 6
         imageView.layer.borderWidth = 1
         imageView.layer.borderColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.1).cgColor
@@ -59,22 +63,26 @@ final class TimelineItemCell: UITableViewCell {
         return label
     }()
     
-    private func makeTitleLabel() -> UILabel {
-        let label = UILabel()
+    private func makeTitleLabel() -> PaddingLabel {
+        let label = PaddingLabel()
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 22, weight: .medium)
+        label.contentInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         return label
     }
     
-    private func makeDescriptionLabel() -> UILabel {
-        let label = UILabel()
+    private func makeDescriptionLabel() -> PaddingLabel {
+        let label = PaddingLabel()
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 16, weight: .regular)
+        label.contentInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
         return label
     }
     
-    private func makeCoverImageView() -> WebImageView {
-        let imageView = WebImageView()
+    private func makeCoverImageView() -> UIImageView {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }
     
@@ -106,11 +114,6 @@ final class TimelineItemCell: UITableViewCell {
         setupLayout()
     }
     
-    override func prepareForReuse() {
-        subsiteIconImageView.image = nil
-        super.prepareForReuse()
-    }
-    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -118,18 +121,15 @@ final class TimelineItemCell: UITableViewCell {
     private func setupLayout() {
         backgroundColor = .clear
         selectionStyle = .none
-        contentView.backgroundColor = .clear
         contentView.preservesSuperviewLayoutMargins = false
-        
+
         contentView.addSubview(containerView)
         
         containerView.addSubview(contentStackView)
-
         containerView.addSubview(subsiteIconImageView)
         containerView.addSubview(subsiteNameLabel)
         containerView.addSubview(authorNameLabel)
         containerView.addSubview(dateLabel)
-        
         containerView.addSubview(commentsImageView)
         containerView.addSubview(commentsLabel)
         containerView.addSubview(likesLabel)
@@ -156,8 +156,8 @@ final class TimelineItemCell: UITableViewCell {
             dateLabel.trailingAnchor.constraint(lessThanOrEqualTo: containerView.trailingAnchor, constant: -16),
             
             contentStackView.topAnchor.constraint(equalTo: subsiteNameLabel.bottomAnchor, constant: 10),
-            contentStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
-            contentStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            contentStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            contentStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             
             commentsImageView.topAnchor.constraint(equalTo: contentStackView.bottomAnchor, constant: 12),
             commentsImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
@@ -173,12 +173,19 @@ final class TimelineItemCell: UITableViewCell {
         ])
     }
     
+    @objc private func imageViewTapped(_ sender: UITapGestureRecognizer) {
+        let imageView = contentStackView.arrangedSubviews.first { $0 is UIImageView } as? UIImageView
+        if let image = imageView?.image {
+            delegate?.openImage(image: image)
+        }
+    }
+    
     func configure(with viewModel: TimelineItemViewModel) {
-        subsiteIconImageView.loadImage(url: "https://leonardo.osnova.io/\(viewModel.model.data.subsite.avatar.data.uuid)")
+        contentView.directionalLayoutMargins = viewModel.margins
+        setupSubsiteIcon(imageUid: viewModel.model.data.subsite.avatar.data.uuid)
         subsiteNameLabel.text = viewModel.model.data.subsite.name
         authorNameLabel.text = viewModel.model.data.author.name
         dateLabel.text = formatDate(date: viewModel.model.data.date)
-        contentView.directionalLayoutMargins = viewModel.margins
         setupContentStackView(data: viewModel.model.data)
         commentsLabel.text = String(viewModel.model.data.counters.comments)
         likesLabel.text = String(viewModel.model.data.likes.counter)
@@ -192,30 +199,54 @@ final class TimelineItemCell: UITableViewCell {
         return formatter.string(from: timeInterval) ?? ""
     }
     
+    private func setupSubsiteIcon(imageUid: String) {
+        if let url = URL(string: "https://leonardo.osnova.io/\(imageUid)"), !imageUid.isEmpty {
+            subsiteIconImageView.kf.setImage(with: url)
+        }
+    }
+    
     private func setupContentStackView(data: TimelineItemDataModel) {
         contentStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        if !data.title.isEmpty {
-            let titleLabel = makeTitleLabel()
-            titleLabel.text = data.title
-            contentStackView.addArrangedSubview(titleLabel)
-        }
+        addTitleBlock(text: data.title)
         data.blocks.filter { $0.cover }.forEach {
             switch $0.data {
             case let .text(model):
-                let descriptionLabel = makeDescriptionLabel()
-                descriptionLabel.text = model.text
-                contentStackView.addArrangedSubview(descriptionLabel)
+                addDescriptionBlock(text: model.text)
             case let .media(model):
-                model.items.forEach { item in
-                    let coverImageView = makeCoverImageView()
-                    coverImageView.loadImage(url: "https://leonardo.osnova.io/\(item.image.data.uuid)")
-                    contentStackView.addArrangedSubview(coverImageView)
+                model.items.forEach {
+                    addImageBlock(model: $0)
                 }
-            case let .telegram(model):
-                print(model)
-            case .unknown:
+            case .telegram, .unknown:
                 break
             }
         }
+    }
+    
+    private func addTitleBlock(text: String) {
+        guard !text.isEmpty else { return }
+        let titleLabel = makeTitleLabel()
+        titleLabel.text = text
+        contentStackView.addArrangedSubview(titleLabel)
+    }
+    
+    private func addDescriptionBlock(text: String) {
+        guard !text.isEmpty else { return }
+        let descriptionLabel = makeDescriptionLabel()
+        descriptionLabel.text = text
+        contentStackView.addArrangedSubview(descriptionLabel)
+    }
+    
+    private func addImageBlock(model: BlockMediaItemModel) {
+        let coverImageView = makeCoverImageView()
+        if let url = URL(string: "https://leonardo.osnova.io/\(model.image.data.uuid)"), !model.image.data.uuid.isEmpty {
+            coverImageView.kf.setImage(with: url)
+        }
+        coverImageView.heightAnchor.constraint(
+            lessThanOrEqualTo: coverImageView.widthAnchor,
+            multiplier: CGFloat(model.image.data.height / model.image.data.width)
+        ).isActive = true
+        contentStackView.addArrangedSubview(coverImageView)
+        let recognizer = UITapGestureRecognizer(target: self, action: #selector(TimelineItemCell.imageViewTapped(_:)))
+        contentStackView.addGestureRecognizer(recognizer)
     }
 }
